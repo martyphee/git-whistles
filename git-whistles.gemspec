@@ -21,7 +21,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "pry-nav"
   gem.add_development_dependency "rspec"
 
-  gem.add_dependency "pivotal-tracker", "~> 0.5.6"
+  gem.add_dependency "blanket_wrapper"
   gem.add_dependency "term-ansicolor"
 
   gem.files         = `git ls-files`.split($\)

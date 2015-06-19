@@ -9,12 +9,11 @@
 #   <team>/<branch-title>-<story-id>
 #
 require 'rubygems'
-require 'pivotal-tracker'
 require 'optparse'
 require 'cgi'
 require 'term/ansicolor'
 require 'git-whistles/app'
-
+require 'service/pivotal_tracker_service'
 
 class App < Git::Whistles::App
 
@@ -108,26 +107,13 @@ class App < Git::Whistles::App
     @repo ||= origin_url.sub(/.*github\.com[\/:]/,'').sub(/\.git$/,'')
   end
 
-
   def add_pivotal_info(query, story_id)
-    token = `git config pivotal-tracker.token`.strip
-    if token.empty?
-      puts Term::ANSIColor.yellow %Q{
-        Your branch appears to have a story ID,
-        but I don't know your Pivotal Tracker token!
-        Please set it with:
-        $ git config [--global] pivotal-tracker.token <token>
-      }
-      die "Aborting."
-    end
+    log.info 'Finding your project and story¬'
 
-    log.info "Finding your project and story¬"
-
-    PivotalTracker::Client.token = token
     begin
-      story, project = PivotalTracker::Project.all.find do |project|
+      story, project = PivotalTrackerService.api.projects.get.find do |project|
         log.info '.¬'
-        story = project.stories.find(story_id) and break story, project
+        (story = PivotalTrackerService.api.projects(project.id).stories(story_id).get) and break story, project
       end
       log.info '.'
     rescue RestClient::Unauthorized

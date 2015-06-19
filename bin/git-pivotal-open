@@ -9,9 +9,9 @@
 
 require 'rubygems'
 require 'optparse'
-require 'pivotal-tracker'
 require 'term/ansicolor'
 require 'git-whistles/app'
+require 'service/pivotal_tracker_service'
 
 class App < Git::Whistles::App
 
@@ -30,12 +30,10 @@ class App < Git::Whistles::App
                   args.first
                 end
 
-    setup_pivotal_tracker_client
-
     warn_story_not_found if @story_id.nil?
 
-    PivotalTracker::Project.all.find do |project|
-      story = project.stories.find(@story_id)
+    PivotalTrackerService.api.projects.get.find do |project|
+      story = PivotalTrackerService.api.projects(project.id).stories(@story_id).get
       next unless story
 
       system('open', story.url) and return
@@ -45,14 +43,6 @@ class App < Git::Whistles::App
   end
 
   private
-
-  def setup_pivotal_tracker_client
-    token = `git config pivotal-tracker.token`.strip
-    if token.empty?
-      warn_missing_pivotal_tracker_token
-    end
-    PivotalTracker::Client.token = token
-  end
 
   def warn_story_not_found
     puts Term::ANSIColor.yellow %Q{
